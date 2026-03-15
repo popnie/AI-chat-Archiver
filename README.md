@@ -1,6 +1,6 @@
 <div align="center">
 
-# 智荟 AI 聊天档案馆  
+# AI聊天存档大师  
 # AI Chat Archiver
 
 让重要的 AI 对话不再丢失，支持归档、整理、回看与可视化展示。  
