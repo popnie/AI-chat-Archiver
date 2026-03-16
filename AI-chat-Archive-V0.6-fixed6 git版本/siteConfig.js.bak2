@@ -1,0 +1,164 @@
+(()=>{
+  function collectHeadings(root, options = {}) {
+    if (!root) return [];
+    const scope = options.subSelector ? root.querySelector(options.subSelector) : root;
+    if (!scope) return [];
+    const headings = Array.from(scope.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+    const results = [];
+    for (const el of headings) {
+      if (options.excludeFn && options.excludeFn(el)) continue;
+      const text = (el.textContent || '').trim();
+      if (!text) continue;
+      results.push({ element: el, level: parseInt(el.tagName[1], 10), text });
+    }
+    return results;
+  }
+  function mdFromHtml(html) {
+    if (typeof window.htmlToMarkdown_TD === 'function') {
+      try { return window.htmlToMarkdown_TD(html); } catch (_) {}
+    }
+    return String(html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  function textOf(node) {
+    return (node?.innerText || node?.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+  window.SITE_CONFIGS = {
+    chatgpt: {
+      urlPatterns: [/chat\.openai\.com/, /chatgpt\.com/],
+      selectors: { userMessage: 'div[data-message-author-role="user"]', aiResponse: 'div[data-message-author-role="assistant"] .markdown', mainContent: 'main' },
+      isDarkTheme: () => !!window.matchMedia?.('(prefers-color-scheme: dark)')?.matches,
+      findResponse(userEl) {
+        let article = userEl; while (article && article.tagName !== 'ARTICLE') article = article.parentElement;
+        if (!article) return null;
+        const testId = article.getAttribute('data-testid');
+        if (!testId || !testId.startsWith('conversation-turn-')) return article.nextElementSibling;
+        const nextIndex = parseInt(testId.replace('conversation-turn-', ''), 10) + 1;
+        return document.querySelector(`article[data-testid="conversation-turn-${nextIndex}"]`);
+      },
+      getOutlineHeadings(userEl) { const response = this.findResponse(userEl); return collectHeadings(response, { subSelector: '.markdown' }); },
+      getResponseFormatted(userEl, format = 'markdown') { const response = this.findResponse(userEl); if (!response) return null; const markdownEl = response.querySelector('.markdown'); if (!markdownEl) return ''; if (format === 'plain') return markdownEl.textContent || ''; return mdFromHtml(markdownEl.innerHTML || ''); }
+    },
+    claude: {
+      urlPatterns: [/claude\.ai/],
+      selectors: { userMessage: '[data-testid="user-message"]', aiResponse: '.standard-markdown, [data-testid="assistant-message"]', mainContent: ['.relative.flex.w-full.flex-1','.relative.flex.w-full.flex-1.overflow-x-hidden','.relative.mx-auto.flex.h-full.w-full.max-w-3xl.flex-1.flex-col','#__next > div > div > main','.flex-1.flex.flex-col.gap-3'].join(',') },
+      isDarkTheme: () => document.documentElement.getAttribute('data-mode') === 'dark',
+      findResponse(userEl) {
+        const isAssistantBlock = (node) => node ? !!(node.querySelector?.('[data-testid="assistant-message"]') || node.querySelector?.('.standard-markdown') || node.querySelector?.('.font-claude-message') || node.matches?.('[data-testid="assistant-message"]')) : false;
+        const turn = userEl.closest('[data-test-render-count]');
+        if (turn) { let sib = turn.nextElementSibling; let hops = 0; while (sib && hops < 20) { if (isAssistantBlock(sib)) return sib; if (sib.querySelector?.('[data-testid="user-message"]')) break; sib = sib.nextElementSibling; hops += 1; } }
+        let cursor = userEl; for (let depth = 0; cursor && depth < 10; depth += 1) { let sib = cursor.nextElementSibling; let hops = 0; while (sib && hops < 20) { if (isAssistantBlock(sib)) return sib; sib = sib.nextElementSibling; hops += 1; } cursor = cursor.parentElement; }
+        return null;
+      },
+      getOutlineHeadings(userEl) { const response = this.findResponse(userEl); return collectHeadings(response, { excludeFn: (el) => el.classList.contains('pointer-events-none') }); },
+      getResponseFormatted(userEl, format = 'markdown') {
+        const response = this.findResponse(userEl); if (!response) return null;
+        const isAssistantLike = (node) => node ? !!(node.matches?.('[data-testid="assistant-message"]') || node.querySelector?.('[data-testid="assistant-message"]') || node.querySelector?.('.standard-markdown') || node.querySelector?.('.font-claude-message') || node.querySelector?.('.prose')) : false;
+        const blocks = [response]; let sib = response.nextElementSibling; let hops = 0;
+        while (sib && hops < 20 && !sib.querySelector?.('[data-testid="user-message"]')) { if (isAssistantLike(sib)) blocks.push(sib); sib = sib.nextElementSibling; hops += 1; }
+        const selectors = ['[data-testid="assistant-message"] .standard-markdown','[data-testid="assistant-message"] .font-claude-message','[data-testid="assistant-message"] .prose','.standard-markdown','.font-claude-message','.prose'];
+        const contentNodes = []; const seen = new Set();
+        for (const selector of selectors) for (const block of blocks) for (const node of block.querySelectorAll(selector)) { if (seen.has(node)) continue; seen.add(node); if (textOf(node)) contentNodes.push(node); }
+        if (!contentNodes.length) { for (const block of blocks) { if (block.matches?.('[data-testid="assistant-message"]') && textOf(block)) contentNodes.push(block); } }
+        if (!contentNodes.length) return '';
+        if (format === 'plain') return contentNodes.map(textOf).sort((a,b)=>b.length-a.length)[0] || '';
+        let best = ''; let bestScore = -1;
+        for (const node of contentNodes) { const md = mdFromHtml(node.innerHTML || '').trim(); if (!md) continue; let score = md.length; if (/(^|\n)\s*#{1,6}\s+/m.test(md)) score += 1000; if (/(^|\n)\s*[-*+]\s+/.test(md)) score += 1000; if (/(^|\n)\s*\d+\.\s+/.test(md)) score += 1000; if (/```/.test(md)) score += 200; if (score > bestScore) { bestScore = score; best = md; } }
+        return best;
+      }
+    },
+    deepseek: {
+      urlPatterns: [/chat\.deepseek\.com/],
+      selectors: { userMessage: '.fbb737a4', aiResponse: '._4f9bf79 > .ds-message > .ds-markdown', mainContent: ['._7780f2e','#root','main','body > div:first-child','[class*="layout"]','[class*="conversation"]','[class*="chat"]'].join(',') },
+      isDarkTheme: () => document.body.classList.contains('dark') || document.body.getAttribute('data-ds-dark-theme') === 'dark',
+      findResponse(userEl) { const row = userEl.closest('._9663006'); if (!row) return null; let sib = row.nextElementSibling; while (sib && !sib.classList.contains('_4f9bf79')) sib = sib.nextElementSibling; return sib || null; },
+      getOutlineHeadings(userEl) { const response = this.findResponse(userEl); if (!response) return []; const msg = response.querySelector('.ds-message'); if (!msg) return collectHeadings(response); let content = null; for (const node of Array.from(msg.querySelectorAll('.ds-markdown'))) { if (!node.closest('.ds-think-content')) { content = node; break; } } return collectHeadings(content || response); },
+      getResponseFormatted(userEl, format = 'markdown') { const response = this.findResponse(userEl); if (!response) return null; const msg = response.querySelector('.ds-message'); if (!msg) return ''; let content = null; for (const node of Array.from(msg.querySelectorAll('.ds-markdown'))) { if (!node.closest('.ds-think-content')) { content = node; break; } } if (!content) return ''; if (format === 'plain') return content.innerText || ''; return mdFromHtml(content.innerHTML || ''); }
+    },
+    gemini: {
+      urlPatterns: [/gemini\.google\.com\//],
+      selectors: { userMessage: 'user-query,user-query div.query-text,div.query-text.gds-body-l,div.query-text,[class*="query-text" i],[data-testid*="user-query" i],[data-test-id*="user-query" i],[class*="user-query" i]', aiResponse: 'model-response,div.response-content,message-content.model-response-text,[class*="model-response" i]', mainContent: '#chat-history > infinite-scroller,#chat-history,.chat-history-scroll-container,main.chat-app,main' },
+      normalizeUserEl(userEl) { return userEl?.closest?.('user-query,[class*="conversation-turn" i],[class*="turn-container" i],message-content,[class*="query-container" i]') || userEl; },
+      isDarkTheme: () => document.body.classList.contains('dark-theme'),
+      findResponse(userEl) {
+        const root = this.normalizeUserEl ? (this.normalizeUserEl(userEl) || userEl) : userEl;
+        const findModelResponse = (node) => node ? (node.matches?.('model-response') ? node : node.querySelector?.('model-response') || node.querySelector?.('div.response-content')?.closest?.('model-response') || null) : null;
+        const turn = root?.closest?.('conversation-turn,[class*="conversation-turn" i],[class*="turn-container" i],[class*="turn" i]');
+        if (turn) {
+          const direct = turn.querySelector('model-response');
+          if (direct) return direct;
+        }
+        let cursor = root; for (let depth = 0; cursor && depth < 12; depth += 1) { let sib = cursor.nextElementSibling; let hops = 0; while (sib && hops < 40) { const found = findModelResponse(sib); if (found) return found; if (sib.matches?.('user-query') || sib.querySelector?.('user-query')) break; sib = sib.nextElementSibling; hops += 1; } cursor = cursor.parentElement; }
+        const conv = root?.closest?.('.conversation-container,#chat-history,main.chat-app,main'); if (conv) { const responses = conv.querySelectorAll('model-response'); for (const resp of responses) { if (root.compareDocumentPosition(resp) & Node.DOCUMENT_POSITION_FOLLOWING) return resp; } }
+        for (const resp of document.querySelectorAll('model-response')) { if (root.compareDocumentPosition(resp) & Node.DOCUMENT_POSITION_FOLLOWING) return resp; }
+        return null;
+      },
+      getOutlineHeadings(userEl) {
+        const response = this.findResponse(userEl);
+        const content = response?.querySelector?.('message-content.model-response-text .markdown.markdown-main-panel,message-content.model-response-text .markdown,.response-content .markdown.markdown-main-panel,.response-content .markdown,.model-response-text .markdown') || response;
+        return collectHeadings(content, { excludeFn: (el) => /\bsaid\b/i.test((el.textContent || '').trim()) });
+      },
+      getResponseFormatted(userEl, format = 'markdown') {
+        const response = this.findResponse(userEl); if (!response) return null;
+        const candidates = ['message-content.model-response-text .markdown.markdown-main-panel','message-content.model-response-text .markdown','message-content.model-response-text','.response-content .markdown.markdown-main-panel','.response-content .markdown','.response-content','.model-response-text .markdown','.model-response-text','.markdown'];
+        let content = null; for (const selector of candidates) { const node = response.querySelector(selector); if (node && textOf(node)) { content = node; break; } }
+        if (!content && textOf(response)) content = response; if (!content) return ''; if (format === 'plain') return content.innerText || ''; return mdFromHtml(content.innerHTML || '');
+      }
+    },
+    qwen: {
+      urlPatterns: [/chat\.qwen\.ai/, /chat\.qwenlm\.ai/, /(?:^|\.)qwen\.ai/],
+      selectors: { userMessage: '.qwen-chat-message-user .user-message-content, [class*="user-message"] [class*="content"]', aiResponse: '.qwen-chat-message-assistant .qwen-markdown, [class*="assistant-message"] [class*="markdown"]', mainContent: '#chat-messages-scroll-container, main' },
+      isDarkTheme: () => document.body.classList.contains('dark') || document.documentElement.classList.contains('dark'),
+      findResponse(userEl) { let row = userEl.closest('.qwen-chat-message-user,[class*="user-message"],[data-role="user"]'); if (!row) row = userEl; let sib = row.nextElementSibling; while (sib) { if (sib.classList?.contains('qwen-chat-message-assistant') || sib.querySelector?.('.qwen-markdown,[class*="assistant-message"],[class*="markdown"]')) return sib; sib = sib.nextElementSibling; } return null; },
+      getOutlineHeadings(userEl) { const response = this.findResponse(userEl); return collectHeadings(response ? response.querySelector('.qwen-markdown,[class*="markdown"]') || response : null); },
+      getResponseFormatted(userEl, format = 'markdown') { const response = this.findResponse(userEl); if (!response) return null; const content = response.querySelector('.qwen-markdown,[class*="markdown"]') || response; if (format === 'plain') return content.innerText || ''; return mdFromHtml(content.innerHTML || ''); }
+    },
+    kimi: {
+      urlPatterns: [/kimi\.com/],
+      selectors: { userMessage: '[data-role="user"],[data-testid*="user" i],[class*="user-message" i],[class*="message-user" i],[class*="chat-user" i],[class*="userBubble" i],[class*="bubble-user" i],[class*="question" i],[class*="request" i]', aiResponse: '[data-role="assistant"],[data-testid*="assistant" i],[class*="assistant-message" i],[class*="message-assistant" i],[class*="model-answer" i],[class*="answer" i],[class*="response" i],[class*="markdown" i]', mainContent: 'main,[class*="chat-scroll" i],[class*="chat-content" i],[class*="message-list" i],[class*="conversation" i]' },
+      normalizeUserEl(userEl) { return userEl?.closest?.('[data-role],[data-testid],[role="listitem"],article,[class*="message" i],[class*="bubble" i],[class*="turn" i],[class*="item" i]') || userEl; },
+      isDarkTheme: () => document.body.classList.contains('dark') || document.documentElement.classList.contains('dark'),
+      findResponse(userEl) {
+        const assistantSelectors = '[data-role="assistant"],[data-testid*="assistant" i],[class*="assistant-message" i],[class*="message-assistant" i],[class*="model-answer" i],[class*="answer" i],[class*="response" i],[class*="markdown" i]';
+        const userSelectors = '[data-role="user"],[data-testid*="user" i],[class*="user-message" i],[class*="message-user" i],[class*="bubble-user" i]';
+        const findNearestBelow = (anchor, maxDistance = 3200) => {
+          const anchorTop = anchor?.getBoundingClientRect?.().top || 0;
+          const candidates = Array.from(document.querySelectorAll(assistantSelectors)).filter(node => node !== anchor);
+          let best = null, bestDistance = Infinity;
+          for (const node of candidates) {
+            const nodeTop = node.getBoundingClientRect().top;
+            const distance = nodeTop - anchorTop;
+            if (distance > 2 && distance < bestDistance && distance < maxDistance) {
+              best = node;
+              bestDistance = distance;
+            }
+          }
+          return best;
+        };
+        let row = this.normalizeUserEl ? (this.normalizeUserEl(userEl) || userEl) : userEl;
+        let sib = row?.nextElementSibling;
+        while (sib) {
+          if (sib.matches?.(assistantSelectors) || sib.querySelector?.(assistantSelectors)) return sib;
+          if (sib.matches?.('[data-role="user"],[data-testid*="user" i]') || sib.querySelector?.(userSelectors)) break;
+          sib = sib.nextElementSibling;
+        }
+        let cursor = row;
+        for (let depth = 0; cursor && depth < 8; depth += 1) {
+          const fallback = findNearestBelow(cursor, 3200);
+          if (fallback) return fallback;
+          cursor = cursor.parentElement;
+        }
+        return null;
+      },
+      getOutlineHeadings(userEl) { const response = this.findResponse(userEl); return collectHeadings(response ? response.querySelector('[class*="markdown" i],[class*="answer" i],article,.prose') || response : null); },
+      getResponseFormatted(userEl, format = 'markdown') { const response = this.findResponse(userEl); if (!response) return null; const content = response.querySelector('[class*="markdown" i],[class*="answer" i],article,.prose') || response; if (format === 'plain') return content.innerText || ''; return mdFromHtml(content.innerHTML || ''); }
+    },
+    grok: {
+      urlPatterns: [/grok\.com/],
+      selectors: { userMessage: '[data-role="user"],[class*="user-message"],[class*="message-user"]', aiResponse: '[data-role="assistant"],[class*="assistant-message"],[class*="message-assistant"],[class*="markdown"]', mainContent: 'main,[class*="conversation"]' },
+      isDarkTheme: () => document.body.classList.contains('dark') || document.documentElement.classList.contains('dark'),
+      findResponse(userEl) { let row = userEl.closest('[data-role="user"],[class*="user-message"],[class*="message-user"]'); if (!row) row = userEl; let sib = row.nextElementSibling; while (sib) { if (sib.matches?.('[data-role="assistant"],[class*="assistant-message"],[class*="message-assistant"]') || sib.querySelector?.('[data-role="assistant"],[class*="assistant-message"],[class*="markdown"]')) return sib; sib = sib.nextElementSibling; } return null; },
+      getOutlineHeadings(userEl) { const response = this.findResponse(userEl); return collectHeadings(response ? response.querySelector('[class*="markdown"],article,.prose') || response : null); },
+      getResponseFormatted(userEl, format = 'markdown') { const response = this.findResponse(userEl); if (!response) return null; const content = response.querySelector('[class*="markdown"],article,.prose') || response; if (format === 'plain') return content.innerText || ''; return mdFromHtml(content.innerHTML || ''); }
+    }
+  };
+})();

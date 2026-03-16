@@ -1,0 +1,17 @@
+{
+  "extName": {
+    "message": "AI chat Archiver"
+  },
+  "extDesc": {
+    "message": "AI chat Archiver: bookmarks, timeline outline, mind map, and enhanced export tools"
+  },
+  "enableExtension": {
+    "message": "Enable Extension"
+  },
+  "website": {
+    "message": "Official Website"
+  },
+  "pageNotSupported": {
+    "message": "This page is not supported"
+  }
+}

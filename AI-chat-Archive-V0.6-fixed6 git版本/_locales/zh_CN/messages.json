@@ -1,0 +1,17 @@
+{
+  "extName": {
+    "message": "AI聊天存档大师"
+  },
+  "extDesc": {
+    "message": "AI聊天存档大师：聊天收藏、时间线大纲、思维导图与导出增强插件"
+  },
+  "enableExtension": {
+    "message": "启用扩展"
+  },
+  "website": {
+    "message": "官方网站"
+  },
+  "pageNotSupported": {
+    "message": "提示：当前页面不支持此扩展"
+  }
+}

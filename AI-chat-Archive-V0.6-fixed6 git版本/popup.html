@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AI聊天存档大师 V0.6 Git</title>
+  <style>
+    :root{--primary:#f97316;--primary-dark:#ea580c;--danger:#ef4444;--danger-dark:#dc2626;--line:#e2e8f0;--text:#0f172a;--muted:#64748b;--card:#ffffff;}
+    *{box-sizing:border-box}
+    body{width:376px;margin:0;background:radial-gradient(circle at top,#fff7ed 0,#fffaf5 36%,#f8fafc 100%);color:var(--text);padding:12px;}
+    body.font-zh{font-family:"Times New Roman",Times,"Microsoft YaHei","微软雅黑",sans-serif;}
+    body.font-en{font-family:"Times New Roman",Times,serif;}
+    .hero{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(255,250,245,.94));border:1px solid rgba(251,146,60,.18);border-radius:24px;padding:14px;box-shadow:0 16px 32px rgba(15,23,42,.08);margin-bottom:10px;position:relative;overflow:visible}
+    .hero::after{content:"";position:absolute;right:-22px;top:-28px;width:96px;height:96px;background:radial-gradient(circle,rgba(251,146,60,.16),transparent 70%)}
+    .logo-wrap{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+    .hdr-icon{width:64px;height:64px;border-radius:20px;box-shadow:0 10px 20px rgba(249,115,22,.16);display:block;background:#fff;object-fit:cover}
+    .title{font-size:19px;font-weight:900;line-height:1.15;margin:0 0 4px}
+    .badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:999px;background:linear-gradient(135deg,#ffedd5,#fff7ed);color:#ea580c;font-size:11px;font-weight:900;letter-spacing:.2px}
+    .lang-toggle{display:flex;gap:10px;margin-bottom:10px}
+    .lang-btn{flex:1;padding:11px 12px;border-radius:18px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:12px;font-weight:900;cursor:pointer;transition:.2s}
+    .lang-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-color:transparent;box-shadow:0 10px 18px rgba(249,115,22,.24)}
+    .dynamic-hint{display:block;margin-top:10px;font-size:12px;font-weight:900;background:linear-gradient(135deg,#f97316,#ec4899,#8b5cf6);background-size:220% 220%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:flow 3s ease infinite}
+    @keyframes flow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    .support-inline{margin-top:10px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:18px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;overflow:visible}
+    .support-title{font-size:12px;font-weight:900;margin:0 0 3px}
+    .support-sub{font-size:10px;color:#64748b;line-height:1.5}
+    .support-qr-wrap{position:relative;display:flex;align-items:center;justify-content:center;overflow:visible}
+    .support-qr{width:62px;height:62px;border-radius:12px;border:1px solid var(--line);background:#fff;padding:4px;box-shadow:0 8px 18px rgba(15,23,42,.08);transform-origin:right center;transition:transform .28s cubic-bezier(.175,.885,.32,1.275), box-shadow .28s;cursor:zoom-in;position:relative;z-index:1}
+    .support-qr:hover{transform:scale(3);box-shadow:0 16px 34px rgba(15,23,42,.18);z-index:20}
+    .section{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:12px;box-shadow:0 10px 20px rgba(15,23,42,.04);margin-bottom:10px}
+    .section-title{font-size:12px;font-weight:900;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+    .platform-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .platform-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;border:1px solid #fed7aa;background:linear-gradient(135deg,#ffffff,#fffdf7);cursor:pointer;transition:.22s;position:relative;min-width:0;box-shadow:0 6px 16px rgba(249,115,22,.05)}
+    .platform-card:hover{transform:translateY(-1px);box-shadow:0 12px 18px rgba(15,23,42,.08)}
+    .platform-card.active{border-color:#fb923c;background:linear-gradient(135deg,#fff8f1,#fffdf5);box-shadow:0 10px 18px rgba(249,115,22,.12)}
+    .platform-dot{display:none}
+    .platform-card.active .platform-dot{display:none}
+    .brand-icon{width:34px;height:34px;border-radius:12px;background:#fff;border:1px solid rgba(148,163,184,.16);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 6px 14px rgba(15,23,42,.06)}
+    .brand-icon img{width:20px;height:20px;object-fit:contain;display:block}
+    .brand-icon.kimi img{width:22px;height:14px}
+    .brand-meta{min-width:0;display:flex;flex-direction:column;gap:2px}
+    .brand-name{font-size:13px;font-weight:900;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .platform-card:not(.active) .brand-name{color:#b0b8c4;}
+    .platform-card:not(.active) .platform-dot{display:none;}
+    .platform-card:not(.active) .brand-icon{opacity:0.4;filter:grayscale(80%);}
+    .platform-card:not(.active){border-color:#e2e8f0;background:#f8fafc;box-shadow:none;}
+    .actions{display:flex;flex-direction:column;gap:8px;margin-bottom:0}
+    .btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px 14px;border-radius:18px;text-decoration:none;font-size:13px;font-weight:900;box-shadow:0 10px 18px rgba(15,23,42,.1);transition:.2s}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
+    .btn.github{background:#fff;color:#111827;border:1px solid #d1d5db;box-shadow:0 10px 18px rgba(15,23,42,.08)}
+    .btn-icon-wrap{width:24px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .btn.primary .btn-icon-wrap{background:rgba(255,255,255,.16)}
+    .btn.github .btn-icon-wrap{background:#f3f4f6}
+    .btn-icon{width:16px;height:16px;object-fit:contain;display:block}
+    .foot{display:flex;justify-content:space-between;align-items:center;color:#64748b;font-size:10px;padding:0 2px}
+  </style>
+</head>
+<body class="font-zh">
+  <div class="hero">
+    <div class="logo-wrap">
+      <img src="icon.png" class="hdr-icon" alt="Logo">
+      <div>
+        <div class="title" id="title-text">AI聊天存档大师</div>
+        <div class="badge" id="version-badge">V0.6 Git 版本</div>
+      </div>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="lang-zh">中文</button>
+      <button class="lang-btn" id="lang-en">English</button>
+    </div>
+    <div class="section">
+      <div class="section-title" id="p-title">🤖 插件启动适配</div>
+      <div class="platform-grid" id="p-grid">
+        <div class="platform-card active" data-platform="chatgpt">
+          <div class="platform-dot"></div>
+          <div class="brand-icon"><img src="logo/chatGPT.png" alt="ChatGPT"></div>
+          <div class="brand-meta"><span class="brand-name">ChatGPT</span></div>
+        </div>
+        <div class="platform-card active" data-platform="claude">
+          <div class="platform-dot"></div>
+          <div class="brand-icon"><img src="logo/claude.png" alt="Claude"></div>
+          <div class="brand-meta"><span class="brand-name">Claude</span></div>
+        </div>
+        <div class="platform-card active" data-platform="gemini">
+          <div class="platform-dot"></div>
+          <div class="brand-icon"><img src="logo/gemini.png" alt="Gemini"></div>
+          <div class="brand-meta"><span class="brand-name">Gemini</span></div>
+        </div>
+        <div class="platform-card active" data-platform="deepseek">
+          <div class="platform-dot"></div>
+          <div class="brand-icon"><img src="logo/deepseek.png" alt="DeepSeek"></div>
+          <div class="brand-meta"><span class="brand-name">DeepSeek</span></div>
+        </div>
+        <div class="platform-card active" data-platform="kimi">
+          <div class="platform-dot"></div>
+          <div class="brand-icon kimi"><img src="logo/kimi.png" alt="Kimi"></div>
+          <div class="brand-meta"><span class="brand-name">Kimi</span></div>
+        </div>
+        <div class="platform-card active" data-platform="qwen">
+          <div class="platform-dot"></div>
+          <div class="brand-icon"><img src="logo/qwen.png" alt="Qwen"></div>
+          <div class="brand-meta"><span class="brand-name">Qwen</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a href="https://github.com/popnie/AI-chat-Archive" target="_blank" class="btn github">
+        <span class="btn-icon-wrap"><img src="logo/github.png" class="btn-icon" alt="GitHub"></span>
+        <span id="github-btn">喜欢就 + GitHub⭐</span>
+      </a>
+      <a href="https://shiny.zhihuishuju.com/" target="_blank" class="btn primary"><span id="btn-text">访问实战医学统计</span></a>
+    </div>
+
+    <div class="support-inline">
+      <div>
+        <div class="support-title" id="qr-title">扫码获取更多支持</div>
+        <div class="support-sub" id="support-sub">统计公众号 / 教程 / 最新功能都在这里</div>
+      </div>
+      <div class="support-qr-wrap">
+        <img src="https://github.com/popnie/jpg/blob/main/%E6%88%91%E7%9A%84%E5%85%AC%E4%BC%97%E5%8F%B7%E4%BA%8C%E7%BB%B4%E7%A0%81.jpg?raw=true" class="support-qr" alt="统计公众号二维码">
+      </div>
+    </div>
+
+    <span class="dynamic-hint" id="hero-hint">✨ Prompt 库：右键logo弹出，支持.md导入导出</span>
+  </div>
+
+  <div class="foot">
+    <span id="foot-left">浏览器右侧面板已启用</span>
+    <span id="foot-right">AI Chat Archive</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
