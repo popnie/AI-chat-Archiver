@@ -1,7 +1,7 @@
 <div align="center">
 
 # AI聊天存档大师  
-# AI Chat Archive Master
+# AI Chat Archiver
 
 **把精彩对话存下来，而不是“下次再也找不到”。**  
 **Save your best AI conversations before they disappear into the scroll abyss.**
@@ -140,7 +140,7 @@
 
 ### Overview
 
-**AI Chat Archive Master** is a browser extension designed to help you archive, organize, revisit, and present valuable AI conversations.
+**AI Chat Archiver** is a browser extension designed to help you archive, organize, revisit, and present valuable AI conversations.
 
 Whether it is a great idea, a research note, a writing draft, or one of those *“this answer is too good to lose”* moments, it deserves a better fate than vanishing into endless chat history.
 
@@ -162,7 +162,7 @@ In practical terms, this project helps you:
 
 ### Supported Platforms
 
-**AI Chat Archive Master** currently supports conversation archiving and organization across six major AI platforms, making it easier to preserve valuable chats from different tools in one place for long-term reference and reuse.
+**AI Chat Archiver** currently supports conversation archiving and organization across six major AI platforms, making it easier to preserve valuable chats from different tools in one place for long-term reference and reuse.
 
 - **ChatGPT**  
   Official website: https://chatgpt.com
@@ -177,7 +177,7 @@ In practical terms, this project helps you:
 - **Qwen**  
   Official website: https://qwen.ai
 
-Whether you mainly use one platform or switch between several, **AI Chat Archive Master** helps you keep important AI conversations organized in a more unified and reusable way.
+Whether you mainly use one platform or switch between several, **AI Chat Archiver** helps you keep important AI conversations organized in a more unified and reusable way.
 
 ### Why This Project Exists
 
@@ -189,7 +189,7 @@ At some point, almost everyone says:
 
 > “I know I had a really good answer before... I just can’t find it anymore.”
 
-**AI Chat Archive Master** exists to fix exactly that.  
+**AI Chat Archiver** exists to fix exactly that.  
 It may not create the brilliance for you, but it does make sure the brilliance is not accidentally buried.
 
 ### Interface Showcase
