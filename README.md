@@ -56,6 +56,25 @@
 - 🌏 **中英文双语展示**：项目主页、素材展示和对外介绍都更完整
 - ⚡ **轻量易用**：装上就能用，不需要折腾复杂流程
 
+### 支持平台
+
+**AI聊天存档大师** 现已支持 6 大主流 AI 平台的聊天内容归档与整理，适合把分散在不同 AI 产品中的高价值对话统一沉淀下来，方便长期保存、集中回顾和后续复用。
+
+- **ChatGPT**  
+  官方网址：https://chatgpt.com
+- **Claude**  
+  官方网址：https://claude.ai
+- **Gemini**  
+  官方网址：https://gemini.google.com
+- **DeepSeek**  
+  官方网址：https://www.deepseek.com
+- **Kimi**  
+  官方网址：https://www.kimi.com
+- **Qwen**  
+  官方网址：https://qwen.ai
+
+无论你是固定使用单一平台，还是经常在多个 AI 工具之间切换，**AI聊天存档大师** 都能帮助你更高效地管理这些重要对话记录。
+
 ### 为什么做这个项目？
 
 因为很多 AI 对话都很有价值，但默认都很“易逝”。  
@@ -140,6 +159,25 @@ In practical terms, this project helps you:
 - 🧠 **Mind Map View**: understand complex topics through visual structure
 - 🌏 **Bilingual Presentation**: cleaner project showcase for both Chinese and English audiences
 - ⚡ **Lightweight Workflow**: install it and get to work, without wrestling with complexity
+
+### Supported Platforms
+
+**AI Chat Archive Master** currently supports conversation archiving and organization across six major AI platforms, making it easier to preserve valuable chats from different tools in one place for long-term reference and reuse.
+
+- **ChatGPT**  
+  Official website: https://chatgpt.com
+- **Claude**  
+  Official website: https://claude.ai
+- **Gemini**  
+  Official website: https://gemini.google.com
+- **DeepSeek**  
+  Official website: https://www.deepseek.com
+- **Kimi**  
+  Official website: https://www.kimi.com
+- **Qwen**  
+  Official website: https://qwen.ai
+
+Whether you mainly use one platform or switch between several, **AI Chat Archive Master** helps you keep important AI conversations organized in a more unified and reusable way.
 
 ### Why This Project Exists
 
