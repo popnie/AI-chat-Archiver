@@ -236,7 +236,8 @@ It may not create the brilliance for you, but it does make sure the brilliance i
 https://addons.mozilla.org/zh-CN/firefox/addon/ai-chat-archiver/
 
 **急用用户：**  
-如需尽快使用，可以先下载仓库中的个人分发版，下载后双击即可安装。  
+如需尽快使用，可以先下载仓库中的个人分发版.crx，下载后双击即可安装。如果chrome权限有问题，就下
+文件夹版本，浏览器输入chrome://extensions/，也就是开发者模式→ 管理扩展插件→ 安装文件夹！！！
 如果你已经把安装包发布到了 Releases，建议优先从 Releases 页面下载安装。
 
 ### Installation Notes (English)
@@ -250,6 +251,8 @@ https://addons.mozilla.org/zh-CN/firefox/addon/ai-chat-archiver/
 
 **Need it urgently?**  
 You can use the personal distribution build from this repository. Download it and double-click to install.  
+If there is a problem with chrome permissions, just download the folder version and enter chrome://extensions/into the browser,
+which is developer mode → manage extensions → install folder!!!
 If you have already published the installer in Releases, using the Releases page is recommended.
 
 ---
